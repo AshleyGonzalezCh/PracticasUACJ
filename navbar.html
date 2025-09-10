@@ -1,0 +1,21 @@
+<nav>
+  <div class="nav-logo">UACJ</div>
+  <div class="menu-toggle" onclick="toggleMenu()">
+    <span></span>
+    <span></span>
+    <span></span>
+  </div>
+  <div class="nav-links" id="navLinks">
+    <a href="#">Placeholder</a>
+    <a href="#">Placeholder</a>
+    <a href="#">Placeholder</a>
+    <a href="usuario.php">Iniciar sesión</a>
+  </div>
+</nav>
+
+<script>
+  function toggleMenu() {
+    const navLinks = document.getElementById("navLinks");
+    navLinks.classList.toggle("active");
+  }
+</script>

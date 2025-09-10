@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Inicio</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/navbar-footer.css">
+</head>
+
+<body>
+
+  <div id="navbar"></div>
+
+  <!-- Header-->
+  <header>
+        <div class="contenedorSlider">
+            <input type="radio" id="1" name="slide" hidden />
+            <input type="radio" id="2" name="slide" hidden />
+            <input type="radio" id="3" name="slide" hidden />
+
+            <div class="slide">
+                <!---->
+                <div class="item-slide" id="s1" style="background-color:rgb(53, 92, 198);">
+                </div>
+                <!---->
+
+                <!---->
+                <div class="item-slide" id="s2" style="background-color:rgb(8, 13, 160);">
+
+                </div>
+                <!---->
+
+                <!---->
+                <div class="item-slide" id="s3" style="background-color:rgb(33, 40, 91);">
+
+                </div>
+                <!---->
+            </div>
+
+            <div class="pagination">
+                <label class="pagination-item" for="1"></label>
+                <label class="pagination-item" for="2"></label>
+                <label class="pagination-item" for="3"></label>
+            </div>
+
+        </div>
+    </header>
+
+  <!-- Tarjetas -->
+   
+<!-- Contenedor para título + cards -->
+<div class="section-container">
+
+  <!-- Título de sección -->
+  <h2 class="section-title">Panel de Acceso</h2>
+
+  <!-- Cards -->
+  <section class="cards-section">
+    <div class="card" style="background-image: url('img/Estudiantes.jpg');">
+      <div class="card-overlay">
+        <h3>Portal de Estudiante</h3>
+        <p>Accede a tus cursos, calificaciones y recursos académicos.</p>
+      </div>
+    </div>
+    <div class="card" style="background-image: url('img/Profesores.jpg');">
+      <div class="card-overlay">
+        <h3>Portal de Profesores</h3>
+        <p>Gestiona tus clases y evalúa a tus estudiantes fácilmente.</p>
+      </div>
+    </div>
+    <div class="card" style="background-image: url('img/Reglamento.jpg');">
+      <div class="card-overlay">
+        <h3>Reglamento</h3>
+        <p>Consulta las normas y políticas académicas de la institución.</p>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<div class="section-container-fondo">
+  <!-- Título de sección -->
+  <div class="contenedor-cards-empresas">
+    <h2 class="section-title-fondo">Panel de Acceso</h2>
+    <section class="cards-section empresas">
+      <div class="card logo-card" style="background-image: url('img/logo1.png');"></div>
+      <div class="card logo-card" style="background-image: url('img/logo2.png');"></div>
+      <div class="card logo-card" style="background-image: url('img/logo3.png');"></div>
+      <div class="card logo-card" style="background-image: url('img/logo4.png');"></div>
+      <div class="card logo-card" style="background-image: url('img/logo5.png');"></div>
+    </section>
+    <section class="cards-section empresas">
+      <div class="card logo-card" style="background-image: url('img/logo1.png');"></div>
+      <div class="card logo-card" style="background-image: url('img/logo2.png');"></div>
+      <div class="card logo-card" style="background-image: url('img/logo3.png');"></div>
+      <div class="card logo-card" style="background-image: url('img/logo4.png');"></div>
+      <div class="card logo-card" style="background-image: url('img/logo5.png');"></div>
+    </section>
+  </div>
+</div>
+
+
+
+  <div id="footer"></div>
+
+  <script>
+fetch('navbar.html')
+  .then(res => res.text())
+  .then(data => {
+    document.getElementById('navbar').innerHTML = data;
+
+    // Ajustar altura del slider
+    const navbarHeight = document.getElementById('navbar').offsetHeight;
+    document.querySelector('.contenedorSlider').style.height = `calc(100vh - ${navbarHeight}px)`;
+  });
+
+
+  fetch('footer.html')
+  .then(response => response.text())
+  .then(data => {
+    document.getElementById('footer').innerHTML = data;
+  })
+  .catch(err => console.error('No se pudo cargar el footer', err));
+</script>
+
+</body>
+</html>
