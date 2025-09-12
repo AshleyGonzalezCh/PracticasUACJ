@@ -55,40 +55,357 @@
     gap: 1.5rem;
   }
 
-  .menu-toggle {
-    display: none;
+/* Botón hamburguesa: base + animación a “X” */
+.menu-toggle{
+  position: relative;
+  width: 26px;
+  height: 20px;
+  display: none;            /* se muestra en @media como ya lo tienes */
+  cursor: pointer;
+}
+
+.menu-toggle span{
+  position: absolute;
+  left: 0; right: 0;
+  height: 2px;
+  background: #fff;
+  border-radius: 2px;
+  transition: transform .25s ease, opacity .2s ease, top .25s ease;
+}
+
+/* posiciones iniciales de las 3 barritas */
+.menu-toggle span:nth-child(1){ top: 0;   }
+.menu-toggle span:nth-child(2){ top: 9px; }
+.menu-toggle span:nth-child(3){ top: 18px;}
+
+/* estado activo -> forma “X” */
+.menu-toggle.active span:nth-child(1){
+  top: 9px;
+  transform: rotate(45deg);
+}
+.menu-toggle.active span:nth-child(2){
+  opacity: 0;
+}
+.menu-toggle.active span:nth-child(3){
+  top: 9px;
+  transform: rotate(-45deg);
+}
+
+/* Variante portal reusa el mismo dibujo (color ya es blanco) */
+.menu-toggle.portal{ align-items:center; justify-content:center; }
+
+
+@media (max-width: 768px){
+  /* Botón hamburguesa visible */
+  .menu-toggle{ display:flex; }
+
+  /* Contenedor del menú: columna + slide-down */
+  .nav-links{
+    display:flex;                 /* ya no NONE */
     flex-direction: column;
-    cursor: pointer;
+    width:100%;
+    overflow:hidden;
+    max-height:0;                 /* colapsado */
+    opacity:0;
+    transform: translateY(-8px);
+    padding-top:0;
+    padding-bottom:0;
+    transition:
+      max-height .28s ease,
+      opacity .22s ease,
+      transform .28s ease,
+      padding .25s ease;
   }
 
-  .menu-toggle span {
-    height: 3px;
-    width: 25px;
-    background: white;
-    margin: 4px 0;
-    transition: all 0.3s;
+  /* Abierto */
+  .nav-links.active{
+    max-height:240px;             /* ajusta según items */
+    opacity:1;
+    transform: translateY(0);
+    padding-top:.5rem;
+    padding-bottom:1rem;
   }
 
-  @media (max-width: 768px) {
-    .nav-links {
-      width: 100%;
-      flex-direction: column;
-      display: none;
-    }
-
-    .nav-links.active {
-      display: flex;
-    }
-
-    .menu-toggle {
-      display: flex;
-    }
-
-    .nav{
-      padding: .5rem .5rem;
-    }
-
+  /* Estética de los links apilados */
+  .nav-links a{
+    display:block;
+    padding:.6rem .75rem;
+    border-radius:.5rem;
   }
+  .nav-links a:hover{
+    background: rgba(255,255,255,.08);
+  }
+
+  .nav{ padding:.5rem .5rem; }
+}
+
+
+/* ====== Navbar Portal ====== */
+.nav-portal{
+  --nav-font-size: .875rem;
+  --nav-line-height: 1.25rem;
+  --nav-font-weight: 500;         /* 500=medio, 400=normal, 600=semibold */
+  --nav-letter-spacing: .3px;
+
+  position: sticky; top:0; z-index:40;
+  background: var(--color-principal);
+  box-shadow: 0 1px 0 rgba(0,0,0,.25);
+  font-family: inherit;
+  font-size: var(--nav-font-size);
+  line-height: var(--nav-line-height);
+}
+.nav-portal .barra{
+  height: 4rem;
+  display:flex; align-items:center; justify-content:space-between;
+  gap: 1rem; padding: 0 1.25rem; position: relative;
+}
+.nav-portal .izquierda{ display:flex; align-items:center; gap: 1.375rem; }
+
+
+
+/* LOGO DEL PORTAL */
+
+.nav-portal .marca img{
+  display:block;
+  width:auto;
+  height:auto;
+  max-width:60px;
+  max-height:60px;
+}
+
+.nav-portal .barra{
+  gap: 1rem;
+}
+
+
+
+
+/* ====== Tabs ====== */
+.nav-portal .tabs{
+  display:flex; align-items:flex-end; gap: .5rem;
+  height: 2.75rem;
+  padding-top: 0; padding-bottom: 0;
+}
+.nav-portal .tab{
+  text-decoration:none; user-select:none;
+  padding: .625rem 1rem;
+  border-radius: .75rem .75rem 0 0;
+  font-weight: var(--nav-font-weight);
+  letter-spacing: var(--nav-letter-spacing);
+  color: var(--color-texto-blanco);
+  background: transparent;
+  transition: background-color .15s ease, color .15s ease, transform .15s ease, box-shadow .15s ease, border-radius .15s ease, margin .15s ease, padding .15s ease;
+}
+.nav-portal .tab:hover{
+  background: rgba(255,255,255,.08);
+  border-radius: .5rem;
+}
+.nav-portal .tab.activa{
+  --alza: .5rem;
+  background: var(--color-fondo);
+  color: var(--color-principal);
+  margin-top: calc(var(--alza) * -1);
+  padding-top: calc(.625rem + var(--alza));
+  transform: translateY(6px);
+  box-shadow: 0 6px 0 var(--color-fondo), 0 0 18px rgba(0,0,0,.12);
+}
+.nav-portal .tab.activa:hover{
+  border-radius: .75rem .75rem 0 0;
+}
+
+/* ====== Usuario ====== */
+.nav-portal .derecha{ 
+  position:relative; 
+  display:flex; 
+  align-items:center; 
+  gap:.5rem; 
+  color:#e7eef6; 
+}
+.nav-portal .btn-usuario{
+  display:flex; 
+  align-items:center; 
+  gap:.5rem;
+  background:transparent; 
+  border:none; color:inherit; 
+  cursor:pointer;
+  padding: .375rem .5rem; 
+  border-radius: .5rem;
+}
+.nav-portal .btn-usuario:hover{ 
+  background: rgba(255,255,255,.06); 
+}
+.nav-portal .usuario-nombre{
+  font-size: var(--nav-font-size);
+  line-height: var(--nav-line-height);
+  font-weight: var(--nav-font-weight);
+  letter-spacing: var(--nav-letter-spacing);
+  color: var(--color-texto-blanco);
+  text-transform: uppercase;
+}
+.nav-portal .usuario-avatar{
+  width: 1.75rem; 
+  height: 1.75rem; 
+  border-radius:50%;
+  background: linear-gradient(145deg,#7ea0c8,#3d5a86);
+  border:2px solid rgba(255,255,255,.4);
+}
+.nav-portal .caret{ transition: transform .15s ease; }
+.nav-portal .caret.abierto{ transform: rotate(180deg); }
+
+/* ====== Menú usuario (slide down/up) ====== */
+@keyframes menuSlideDown {
+  from { transform: translateY(-20px); opacity: 0; }
+  to   { transform: translateY(0);     opacity: 1; }
+}
+@keyframes menuSlideUp {
+  from { transform: translateY(0);     opacity: 1; }
+  to   { transform: translateY(-20px); opacity: 0; }
+}
+.nav-portal .menu-usuario{
+  position:absolute; right:0; top: calc(100% + .5rem);
+  min-width: 12rem; background:#fff; color:#223;
+  border:1px solid #e4e7ee; border-radius: .625rem;
+  box-shadow:0 .5rem 1.75rem rgba(0,0,0,.12);
+  padding: .375rem; z-index:50;
+  font-size: var(--nav-font-size); line-height: var(--nav-line-height);
+  will-change: transform, opacity;
+}
+.nav-portal .menu-usuario.abierto{
+  animation: menuSlideDown .25s ease-out forwards;
+}
+.nav-portal .menu-usuario.cerrando{
+  animation: menuSlideUp .25s ease-in forwards;
+}
+@media (prefers-reduced-motion: reduce){
+  .nav-portal .menu-usuario{ animation: none !important; }
+}
+
+/* ====== Header de cuenta dentro del menú ====== */
+.nav-portal .menu-usuario .cuenta{
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  padding: .35rem .5rem .6rem;
+  border-bottom: 1px solid #e9edf4;
+  margin-bottom: .35rem;
+}
+
+.nav-portal .menu-usuario .avatar{
+  width: 40px;
+  height: 40px;
+  flex: 0 0 40px;          /* no se encoje */
+  border-radius: 50%;
+  background: linear-gradient(145deg,#7ea0c8,#3d5a86);
+  border: 1px solid #dbe1ea;
+}
+
+/* Si usas una imagen dentro del avatar */
+.nav-portal .menu-usuario .avatar img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
+}
+
+.nav-portal .menu-usuario .datos .nombre{
+  display:block;
+  font-weight: 600;
+  color: var(--color-principal);
+  line-height: 1.1;
+}
+
+.nav-portal .menu-usuario .datos .email{
+  display:block;
+  font-size: .8rem;
+  color: #6b7280;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 220px; /* ajusta si quieres */
+}
+
+
+/* ====== Portal móvil: hamburguesa + drawer (solo slide) ====== */
+.nav-portal .menu-toggle.portal{
+  display:none;                 /* visible solo en móvil (tu @media lo activa) */
+  align-items:center;
+  justify-content:center;
+  margin-right:.25rem;
+  cursor:pointer;
+}
+
+/* Cerrado: colapsado por max-height; sin opacity ni transform */
+.portal-links{
+  background: var(--color-principal);
+  border-top: 1px solid rgba(255,255,255,.15);
+  overflow: hidden;
+  max-height: 0;
+  padding: 0 1.25rem;           /* laterales fijos; vertical colapsado */
+  transition:
+    max-height .28s ease,
+    padding-top .25s ease,
+    padding-bottom .25s ease;
+  will-change: max-height;
+}
+
+/* Abierto: mismo “slide” que en home */
+.portal-links.active{
+  max-height: 260px;            /* ajusta si agregas más items */
+  padding-top: .5rem;
+  padding-bottom: 1rem;
+}
+
+/* Items (igual que tenías) */
+.portal-link{
+  display:block;
+  color:#fff;
+  text-decoration:none;
+  padding:.6rem .75rem;
+  border-radius:.5rem;
+  margin-bottom:.25rem;
+}
+.portal-link:hover{ background: rgba(255,255,255,.08); }
+.portal-link.activa{
+  background: var(--color-fondo);
+  color: var(--color-principal);
+}
+
+.portal-logout{
+  width:100%;
+  text-align:left;
+  margin-top:.5rem;
+  background:transparent;
+  border:1px solid rgba(255,255,255,.35);
+  color:#fff;
+  border-radius:.5rem;
+  padding:.55rem .75rem;
+  cursor:pointer;
+}
+.portal-logout:hover{ background: rgba(255,255,255,.08); }
+
+
+
+/* ====== Responsive ====== */
+/* Móvil: ocultar nombre junto al avatar; mostrarlo sólo en el menú */
+@media (max-width: 768px){
+  .nav-portal .tabs{ display:none; }
+  .nav-portal .menu-toggle.portal{ display:flex; }
+  .nav-portal .usuario-nombre{ display:none; }         /* <- aquí se oculta el nombre en móvil */
+}
+/* Desktop: sin hamburguesa */
+@media (min-width: 769px){
+  .nav-portal .menu-toggle.portal{ display:none; }
+  .usuario-nombre { display: inline-block; }
+  .nav-portal .menu-usuario .cuenta { display: none; }  /* solo queda "Cerrar sesión" */
+}
+
+
+
+
+
+
+
 
 
 .footer {

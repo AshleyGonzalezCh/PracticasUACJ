@@ -1,7 +1,7 @@
 // pages/estudiantes.js
 import { useEffect, useMemo, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
-import StudentNavbar from '../components/navbarEstudiante';
+import Navbar from '../components/navbar';
 import Footer from '../components/footer';
 
 const MODALIDADES = ['Presencial','Híbrida','Remota'];
@@ -62,7 +62,7 @@ export default function EstudiantesPage() {
 
   return (
     <>
-      <StudentNavbar />
+      <Navbar />
 
       <main className="stu-wrap">
         {/* Buscador */}

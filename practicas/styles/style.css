@@ -718,57 +718,6 @@ body {
   .login-left{ min-height: 160px; }
 }
 
-
-/*-----------------------------------------------------------*/
-/*---------------------- Navbar Estudiantes ---------------------*/
-
-.stu-nav{
-  position: sticky; top:0; z-index: 40;
-  background: var(--color-principal);
-}
-.stu-nav__bar{
-  height: 64px;
-  display:flex; align-items:center; justify-content:space-between;
-  gap: 16px;
-  padding: 0 20px;
-}
-.stu-nav__left{ display:flex; align-items:center; gap: 22px; }
-.stu-nav__brand img{ height: 28px; width:auto; display:block; }
-
-/* Tabs tipo pestaña */
-.stu-nav__tabs{
-  background: #f0f2f6;
-  border-radius: 12px 12px 0 0;
-  padding: 6px 8px 0;
-  height: 38px;
-  display:flex; align-items:flex-end; gap: 14px;
-}
-.stu-nav__tab{
-  text-decoration:none;
-  color:#1b2230;
-  font-size: 13px;
-  letter-spacing:.3px;
-  padding: 8px 14px;
-  border-radius: 12px 12px 0 0;
-  background: transparent;
-}
-.stu-nav__tab.is-active{
-  background: var(--color-texto-blanco);
-  box-shadow: 0 -2px 0 var(--color-texto-blanco), 0 0 18px rgba(0,0,0,.12);
-}
-
-.stu-nav__right{ display:flex; align-items:center; gap:10px; color:#e7eef6; }
-.stu-nav__user{ font-size:12px; opacity:.95; }
-.stu-nav__avatar{
-  width:28px; height:28px; border-radius:50%;
-  background: linear-gradient(145deg, #7ea0c8, #3d5a86);
-  border: 2px solid rgba(255,255,255,.4);
-}
-
-@media (max-width: 640px){
-  .stu-nav__tabs{ display:none; }
-}
-
 /*-----------------------------------------------------------*/
 /*-------------------- Página: Estudiantes ------------------*/
 
