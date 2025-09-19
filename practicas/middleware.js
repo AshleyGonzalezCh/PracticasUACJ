@@ -1,3 +1,4 @@
+// middleware.js
 import { NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 
@@ -19,17 +20,24 @@ export async function middleware(req) {
   const { data: { user } } = await supabase.auth.getUser();
   const pathname = req.nextUrl.pathname;
 
+  // ---- Redirección legacy: /estudiantes -> /alumno/buscar
+  if (pathname === '/estudiantes') {
+    const url = req.nextUrl.clone();
+    url.pathname = '/alumno/buscar';
+    return NextResponse.redirect(url);
+  }
+
   // ---- Rutas públicas (dejan pasar sin login)
   const isPublic =
     pathname === '/' ||
     pathname.startsWith('/login') ||
-    pathname.startsWith('/img') ||            // 👈 permite tus imágenes del folder /public/img
+    pathname.startsWith('/img') ||            // Para poder utilizar las img sin logearse
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api') ||
     pathname === '/favicon.ico';
 
   if (isPublic) {
-    // Si ya estás logueada y visitas /login, mándate a tu portal
+    // Si se pica al login estando ya logeado te manda al portal, ojito plebe
     if (pathname.startsWith('/login') && user) {
       const { data: profile } = await supabase
         .from('profiles')
@@ -39,13 +47,13 @@ export async function middleware(req) {
 
       const role = profile?.role ?? 'student';
       const url = req.nextUrl.clone();
-      url.pathname = role === 'professor' ? '/profesores' : '/estudiantes';
+      url.pathname = role === 'professor' ? '/profesores' : '/alumno/buscar'; // <<< aquí cambiamos
       return NextResponse.redirect(url);
     }
     return res;
   }
 
-  // ---- Rutas protegidas
+  // Rutas protegidas
   if (!user) {
     const url = req.nextUrl.clone();
     url.pathname = '/login';
@@ -56,6 +64,6 @@ export async function middleware(req) {
 }
 
 export const config = {
-  // Excluye estáticos de Next, pero OJO: /img no está aquí, por eso lo manejamos arriba con isPublic
+  // Excluye estáticos de Next
   matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
 };

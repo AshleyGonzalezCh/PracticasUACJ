@@ -1,3 +1,4 @@
+// pages/login.js
 import { useState } from 'react';
 import { useRouter } from 'next/router';
 import Navbar from '../components/navbar';
@@ -36,7 +37,10 @@ export default function LoginPage() {
       .from('profiles').select('role').eq('id', user.id).single();
 
     const role = (profile && profile.role) ? profile.role : 'student';
-    router.replace(role === 'professor' ? '/profesores' : '/estudiantes');
+
+    // 👇 Redirección actualizada
+    const studentPath = '/alumno/buscar';
+    router.replace(role === 'professor' ? '/profesores' : studentPath);
   };
 
   const onReset = async () => {
@@ -55,9 +59,7 @@ export default function LoginPage() {
       <main className="login-wrap">
         <div className="login-card">
           {/* Panel izquierdo (azul) */}
-          <div className="login-left">
-            {/* <img src="/img/login-left.png" alt="UACJ patrón" /> */}
-          </div>
+          <div className="login-left" />
 
           {/* Panel derecho (formulario) */}
           <div className="login-right">
