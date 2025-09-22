@@ -9,31 +9,31 @@ const infoCards = [
     id: 1,
     title: "Procedimiento para registrar prácticas profesionales.",
     image: "/img/ER_01.jpg",
-    description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aquí puedes poner imágenes y mucho texto si quieres."
+    description: "Conoce los pasos a seguir para liberar las prácticas profesionales, los requisitos obligatorios a cumplir y los documentos que a entregar en línea o de manera presencial.  "
   },
   {
     id: 2,
-    title: "Procedimiento para las empresas.",
+    title: "Prácticas Profesionales con empresas no vinculadas a la UACJ.",
     image: "/img/ER_02.jpg",
-    description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Mauris et risus nec dui dictum viverra."
+    description: "Este procedimiento comienza con la solicitud de convenio para iniciar el trámite. Posteriormente se elabora una propuesta de convenio, la cual es sometida a una revisión jurídica por ambas partes. Una vez aprobada por ambas instancias se realizan las firmas correspondientes. Una vez formalizado, se notificará a la empresa para que pase a recoger su ejemplar del convenio."
   },
   {
     id: 3,
     title: "Compensaciones",
     image: "/img/ER_03.jpg",
-    description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Duis nec felis libero."
+    description: "Algunas empresas ofrecen remuneración económica a los estudiantes que estén realizando sus prácticas profesionales. Esta compensación depende de cada empresa y varía entre las vacantes que ofertan. Adicionalmente, la empresa puede ofrecer un puesto de trabajo a los estudiantes que concretaron sus practicas profesionales en su mando, lo cual permite que los estudiantes tengan un puesto de trabajo inmediatamente después de graduarse."
   },
   {
     id: 4,
     title: "Cierre por registro.",
     image: "/img/ER_04.jpg",
-    description: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec commodo nulla ac odio facilisis."
+    description: "Es necesario entregar los documentos requeridos en las oficinas de la Subdirección de Vinculación o bien escanear los documentos totalmente legibles y enviarlos al correo de practicasprofesionales@uacj.mx. Posteriormente se debe responder encuesta de desempeño de la o el estudiante. Finalmente, el supervisor directo, deberá llenar y firmar el formato y sello de la empresa."
   },
   {
     id: 5,
     title: "Prácticas profesionales por reconocimiento.",
     image: "/img/ER_05.jpg",
-    description: "Jesucristo redentor ayudame aaaaaa"
+    description: "La UACJ, con el objetivo de facilitar que los estudiantes que realizan prácticas profesionales reciban una compensación económica por parte de las diferentes sedes de prácticas profesionales, puede ser intermediaria (no obligatoriamente) entre la sede de la práctica y el estudiante. Es importante señalar que este apoyo, por parte de la universidad se gestiona de manera mensual."
   },
 ];
 
