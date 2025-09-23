@@ -347,37 +347,44 @@ export default function EmpresaVacantesPage() {
   };
 
   // ================= Postulaciones (apps) =================
-  useEffect(() => {
-    let ignore = false;
-    const fetchApps = async () => {
-      if (!selected || mode !== "apps") { setApps([]); return; }
-      setAppsLoading(true);
-      const myId = ++reqSeq.current;
+useEffect(() => {
+  let ignore = false;
+  const fetchApps = async () => {
+    if (!selected || mode !== "apps") { setApps([]); return; }
+    setAppsLoading(true);
+    const myId = ++reqSeq.current;
 
-      const { data, error } = await supabase
-        .from("applications")
-        .select(`
-          id, status, offer_expires_at, decision, decision_at, auto_declined, applied_at, created_at,
-          student:profiles!inner ( id, full_name, avatar_url, cv_url, program_id )
-        `)
-        .eq("vacancy_id", selected.id)
-        .in("status", ["postulada","oferta","rechazada","aceptada","retirada"])
-        .order("created_at", { ascending: false });
+    const { data, error } = await supabase
+      .from("applications")
+      .select(`
+        id,
+        status,
+        offer_expires_at,
+        decision,
+        decision_at,
+        auto_declined,
+        applied_at,
+        student:profiles ( id, full_name, avatar_url, cv_url, program_id )  -- LEFT JOIN (sin !inner)
+      `)
+      .eq("vacancy_id", selected.id)
+      .in("status", ["postulada","oferta","rechazada","aceptada","retirada"])
+      .order("applied_at", { ascending: false });
 
-      if (ignore || myId !== reqSeq.current) return;
+    if (ignore || myId !== reqSeq.current) return;
 
-      if (error) {
-        setErr(error.message);
-        setApps([]);
-      } else {
-        setErr("");
-        setApps(data || []);
-      }
-      setAppsLoading(false);
-    };
-    fetchApps();
-    return () => { ignore = true; };
-  }, [selected, mode]);
+    if (error) {
+      setErr(error.message);
+      setApps([]);
+    } else {
+      setErr("");
+      setApps(data || []);
+    }
+    setAppsLoading(false);
+  };
+  fetchApps();
+  return () => { ignore = true; };
+}, [selected, mode]);
+
 
   const sendOffer = async (appId, days = 5) => {
     try {
@@ -762,76 +769,27 @@ export default function EmpresaVacantesPage() {
                 {appsLoading && <div className="jobs-skeleton">Cargando postulaciones…</div>}
 
                 {!appsLoading && (
-                  <section className="apps-list">
+                  <section className="apps-list" style={{ display:"grid", gap:12 }}>
                     {apps.map((app) => {
-                      const canOffer =
-                        app.status === "postulada" && !isInactive(selected) && !isFull(selected);
                       const open = openAppId === app.id;
-
+                      const canOffer = app.status === "postulada" && !isInactive(selected) && !isFull(selected);
+                      const program = programs.find(p => p.id === app.student?.program_id);
                       return (
-                        <div
+                        <StudentCard
                           key={app.id}
-                          className="apps-card"
-                          style={{ cursor: "pointer" }}
-                          onClick={() => setOpenAppId(open ? null : app.id)}
-                        >
-                          <div className="apps-left">
-                            <AvatarSquare src={app.student?.avatar_url} />
-                            <div>
-                              <div className="apps-name">{app.student?.full_name || "Alumno"}</div>
-                              <div className="apps-meta">
-                                <span>Estado: {app.status}</span>
-                                {app.offer_expires_at && (
-                                  <span>Expira: {new Date(app.offer_expires_at).toLocaleString()}</span>
-                                )}
-                              </div>
-
-                              {open && app.student?.cv_url && (
-                                <div className="apps-actions">
-                                  <a
-                                    className="apps-link"
-                                    href={app.student.cv_url}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    onClick={(e) => e.stopPropagation()}
-                                  >
-                                    Ver CV
-                                  </a>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-
-                          <div className="apps-right" onClick={(e) => e.stopPropagation()}>
-                            {open && app.status === "postulada" && (
-                              <div className="apps-buttons">
-                                <button
-                                  className="btn btn-primary"
-                                  onClick={() => sendOffer(app.id, 5)}
-                                  disabled={!canOffer}
-                                  title={
-                                    canOffer ? "Enviar oferta" :
-                                    isFull(selected) ? "Sin cupo disponible" : "Estado no permitido"
-                                  }
-                                >
-                                  Enviar oferta
-                                </button>
-                                <button className="btn btn-ghost" onClick={() => rejectApp(app.id)}>
-                                  Rechazar
-                                </button>
-                              </div>
-                            )}
-
-                            {open && app.status === "oferta" && <div className="apps-badge">Oferta enviada</div>}
-                            {open && app.status === "aceptada" && <div className="apps-badge success">Aceptada ✅</div>}
-                            {open && app.status === "rechazada" && <div className="apps-badge muted">Rechazada</div>}
-                            {open && app.status === "retirada" && <div className="apps-badge muted">Retirada por alumno</div>}
-                          </div>
-                        </div>
+                          app={app}
+                          program={program}
+                          open={open}
+                          onToggle={() => setOpenAppId(open ? null : app.id)}
+                          onSendOffer={() => sendOffer(app.id, 5)}
+                          onReject={() => rejectApp(app.id)}
+                          canOffer={canOffer}
+                        />
                       );
                     })}
                     {!apps.length && <div className="jobs-empty small">Aún no hay postulaciones.</div>}
                   </section>
+
                 )}
               </div>
             )}
@@ -907,4 +865,206 @@ function AvatarSquare({ src }) {
 function splitLines(text) {
   const arr = String(text || "").split(/\r?\n|•|- /).map(s=>s.trim()).filter(Boolean);
   return arr.length ? arr : ["No disponible"];
+}
+
+
+function StudentCard({ app, program, open, onToggle, onSendOffer, onReject, canOffer }) {
+  const subtitle = (() => {
+    // Mostramos correo si existiera en tu perfil (si no, el programa o un fallback)
+    if (app.student?.email) return app.student.email;
+    if (program?.key || program?.name) return `${program?.key ?? ""}${program?.key && program?.name ? " — " : ""}${program?.name ?? ""}`;
+    return "Alumno";
+  })();
+
+  return (
+    <article
+      className="student-card"
+      onClick={onToggle}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e)=>{ if (e.key === "Enter" || e.key === " ") onToggle(); }}
+      style={{
+        position:"relative",
+        background:"#fff",
+        border:"1px solid #e6eaf1",
+        borderRadius:14,
+        padding:14,
+        display:"grid",
+        gap:10,
+        boxShadow: open ? "0 10px 25px rgba(0,0,0,.08)" : "0 2px 10px rgba(0,0,0,.04)",
+        transition:"box-shadow .2s ease, transform .05s ease",
+      }}
+    >
+      {/* rail derecho cuando está abierto */}
+      {open && (
+        <div style={{
+          position:"absolute", right:0, top:0, bottom:0, width:6, borderRadius:"0 14px 14px 0",
+          background:"#3b82f6"
+        }} />
+      )}
+
+      {/* Row compacto (avatar + nombre + menu) */}
+      <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+        <div style={{ width:44, height:44, borderRadius:999, background:"#eef2f7", overflow:"hidden", flex:"0 0 44px", display:"grid", placeItems:"center" }}>
+          {app.student?.avatar_url
+            ? /* eslint-disable-next-line @next/next/no-img-element */
+              <img src={app.student.avatar_url} alt="" style={{ width:"100%", height:"100%", objectFit:"cover" }} />
+            : (
+              <svg width="24" height="24" viewBox="0 0 24 24" aria-hidden>
+                <path fill="#9aa6b2" d="M12 19a7 7 0 1 1 0-14 7 7 0 0 1 0 14m0-11a3 3 0 1 0 0 6 3 3 0 0 0 0-6m0 7.2a5.2 5.2 0 0 0-4.5 2.6 6.8 6.8 0 0 0 9 0A5.2 5.2 0 0 0 12 15.2Z"/>
+              </svg>
+            )
+          }
+        </div>
+
+        <div style={{ flex:1, minWidth:0 }}>
+          <div style={{ fontWeight:700, fontSize:16, lineHeight:1.2, color:"#1f2937", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+            {app.student?.full_name || "Estudiante"}
+          </div>
+          <div style={{ fontSize:13, color:"#6b7280", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+            {subtitle}
+          </div>
+        </div>
+
+        {/* estado en chip compacto */}
+        <StatusChip status={app.status} />
+
+        {/* caret */}
+        <svg
+          width="18" height="18" viewBox="0 0 24 24" aria-hidden
+          style={{ marginLeft:8, transform: open ? "rotate(180deg)" : "rotate(0)", transition:"transform .15s" }}
+        >
+          <path fill="currentColor" d="M7 10l5 5 5-5z" />
+        </svg>
+      </div>
+
+      {/* Panel expandible */}
+      {open && (
+        <div style={{ paddingLeft:56 }}>
+          <div style={{ display:"flex", flexWrap:"wrap", gap:8, marginBottom:10 }}>
+            <InfoPill label="Aplicó" value={timeAgo(app.applied_at)} />
+            {program?.key && <InfoPill label="Programa" value={program.key} />}
+            {app.offer_expires_at && <InfoPill label="Expira" value={new Date(app.offer_expires_at).toLocaleString()} />}
+          </div>
+
+          {/* acciones */}
+          <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
+            {!!app.student?.cv_url && (
+              <a
+                className="btn"
+                href={app.student.cv_url}
+                target="_blank"
+                rel="noreferrer"
+                onClick={(e)=>e.stopPropagation()}
+                style={btnStyle("ghost")}
+              >
+                Ver CV
+              </a>
+            )}
+
+            {app.status === "postulada" && (
+              <>
+                <button
+                  className="jobs-apply"
+                  disabled={!canOffer}
+                  onClick={(e) => { e.stopPropagation(); onSendOffer(); }}
+                  title={canOffer ? "Enviar oferta" : "No disponible"}
+                >
+                  Enviar oferta
+                </button>
+
+                <button
+                  className="btn"
+                  onClick={(e)=>{ e.stopPropagation(); onReject(); }}
+                  style={btnStyle("ghost")}
+                >
+                  Rechazar
+                </button>
+              </>
+            )}
+
+            {app.status === "oferta" && <Badge text="Oferta enviada" tone="info" />}
+            {app.status === "aceptada" && <Badge text="Aceptada ✅" tone="success" />}
+            {app.status === "rechazada" && <Badge text="Rechazada" tone="muted" />}
+            {app.status === "retirada" && <Badge text="Retirada por alumno" tone="muted" />}
+          </div>
+        </div>
+      )}
+    </article>
+  );
+}
+
+function timeAgo(iso) {
+  if (!iso) return "N/D";
+  const d = new Date(iso);
+  const s = Math.floor((Date.now() - d.getTime()) / 1000);
+  if (s < 60) return "justo ahora";
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m} min`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h} h`;
+  const dd = Math.floor(h / 24);
+  if (dd < 7) return `${dd} d`;
+  return d.toLocaleDateString();
+}
+
+
+function StatusChip({ status }) {
+  const map = {
+    postulada: { label:"Postulada", bg:"#eef2f7", fg:"#1f3354" },
+    oferta:    { label:"Oferta",    bg:"#eaf2ff", fg:"#1e40af" },
+    aceptada:  { label:"Aceptada",  bg:"#ecfdf5", fg:"#065f46" },
+    rechazada: { label:"Rechazada", bg:"#f3f4f6", fg:"#6b7280" },
+    retirada:  { label:"Retirada",  bg:"#f3f4f6", fg:"#6b7280" },
+  };
+  const s = map[status] || { label: status || "Estado", bg:"#f3f4f6", fg:"#6b7280" };
+  return (
+    <span style={{
+      fontSize:12, padding:"4px 8px", borderRadius:999, background:s.bg, color:s.fg,
+      whiteSpace:"nowrap"
+    }}>
+      {s.label}
+    </span>
+  );
+}
+
+function InfoPill({ label, value }) {
+  return (
+    <span style={{
+      display:"inline-flex", alignItems:"center", gap:6,
+      fontSize:12, background:"#f8fafc", color:"#475569",
+      padding:"6px 10px", borderRadius:999, border:"1px solid #e6eaf1"
+    }}>
+      <strong style={{ fontWeight:600, color:"#1f2937" }}>{label}:</strong> {value}
+    </span>
+  );
+}
+
+function Badge({ text, tone="info" }) {
+  const tones = {
+    info:    { bg:"#eaf2ff", fg:"#1e40af" },
+    success: { bg:"#ecfdf5", fg:"#065f46" },
+    muted:   { bg:"#f3f4f6", fg:"#6b7280" },
+  };
+  const t = tones[tone] || tones.info;
+  return (
+    <span style={{ fontSize:12, padding:"6px 10px", borderRadius:8, background:t.bg, color:t.fg }}>
+      {text}
+    </span>
+  );
+}
+
+function btnStyle(variant="primary", disabled=false) {
+  if (variant === "ghost") {
+    return {
+      padding:"8px 12px", borderRadius:10, border:"1px solid #dbe2ea", background:"#fff", color:"#1f3354",
+      cursor:"pointer"
+    };
+  }
+  // primary
+  return {
+    padding:"8px 12px", borderRadius:10, border:"1px solid transparent",
+    background: disabled ? "#a5b4fc" : "#4f46e5", color:"#fff",
+    cursor: disabled ? "not-allowed" : "pointer"
+  };
 }

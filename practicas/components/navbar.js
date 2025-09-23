@@ -194,13 +194,13 @@ export default function Navbar() {
 
 
 /* =======================
-   🔔 Componente Notificaciones
+   🔔 Componente Notificaciones (global)
    ======================= */
 function NotificationsBell() {
   const [open, setOpen] = useState(false);
   const [closing, setClosing] = useState(false);
   const [unread, setUnread] = useState(0);
-  const [items, setItems] = useState([]); // {id, type, title, body, action_url, created_at, read_at}
+  const [items, setItems] = useState([]); // {id, type, title, body, action_url, created_at, read_at, ...}
   const panelRef = useRef(null);
   const btnRef = useRef(null);
   const router = useRouter();
@@ -222,15 +222,26 @@ function NotificationsBell() {
 
       setUnread((unreadRows || []).length);
 
-      // 2) Últimas 20 notificaciones (más recientes primero)
-      const { data: list } = await supabase
-        .from("notifications")
-        .select("id, type, title, body, action_url, created_at, read_at")
-        .eq("student_id", user.id)
-        .order("created_at", { ascending: false })
-        .limit(20);
+      // 2) Últimas 20 notificaciones (más recientes primero) — GLOBAL (sin vacancy_id)
+      // 2) Últimas 20 notificaciones (más recientes primero) — SOLO columnas reales
+const { data: list, error } = await supabase
+      .from("notifications")
+      .select(`
+        id,
+        type,
+        title,
+        body,
+        action_url,
+        created_at,
+        read_at
+      `)
+      .eq("student_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(20);
 
-      if (!ignore && list) setItems(list);
+    if (error) console.error("notifications list error:", error);
+    if (!ignore && list) setItems(list);
+
     })();
 
     // Realtime: nuevas notificaciones al vuelo
@@ -282,13 +293,15 @@ function NotificationsBell() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
       if (unread > 0) {
-        await supabase
+        const nowIso = new Date().toISOString();
+        const { error } = await supabase
           .from("notifications")
-          .update({ read_at: new Date().toISOString() })
+          .update({ read_at: nowIso })
           .eq("student_id", user.id)
           .is("read_at", null);
+        if (error) console.error("mark read error:", error);
         setUnread(0);
-        setItems((prev) => prev.map((x) => ({ ...x, read_at: x.read_at || new Date().toISOString() })));
+        setItems((prev) => prev.map((x) => ({ ...x, read_at: x.read_at || nowIso })));
       }
     } catch (e) {
       console.error(e);
@@ -368,7 +381,7 @@ function NotificationsBell() {
                     {iconForType(n.type)}
                   </div>
                   <div className="notif-body">
-                    <div className="notif-title">{n.title}</div>
+                    <div className="notif-title">{n.title || prettyTitleFromType(n.type)}</div>
                     {n.body ? <div className="notif-text">{n.body}</div> : null}
                     <div className="notif-meta">
                       <time dateTime={n.created_at}>{timeAgo(n.created_at)}</time>
@@ -426,3 +439,14 @@ function iconForType(type) {
     </svg>
   );
 }
+
+function prettyTitleFromType(type) {
+  const map = {
+    offer: "¡Tienes una oferta!",
+    rejected: "Tu postulación fue rechazada",
+    auto_declined: "Tu oferta caducó",
+    info: "Notificación",
+  };
+  return map[type] || "Notificación";
+}
+

@@ -124,13 +124,14 @@ export default function EstudiantesPage() {
   const PAGE_SIZE = 20;
   const [hasMore, setHasMore] = useState(true);
 
-  // Usuario, programa, favoritos/ocultas
+  // Usuario, programa, favoritos/ocultas, aplicadas
   const [userId, setUserId] = useState(null);
   const [studentProgramId, setStudentProgramId] = useState(null);
   const [favIds, setFavIds] = useState([]);
   const [hiddenIds, setHiddenIds] = useState([]);
+  const [appliedVacancyIds, setAppliedVacancyIds] = useState([]); // <<< NUEVO
 
-  /* ----- Boot: usuario + programa + favoritos + ocultas ----- */
+  /* ----- Boot: usuario + programa + favoritos + ocultas + aplicadas ----- */
   useEffect(() => {
     let ignore = false;
     const boot = async () => {
@@ -144,17 +145,23 @@ export default function EstudiantesPage() {
         .select("program_id")
         .eq("id", user.id)
         .single();
-
       if (!ignore) setStudentProgramId(profile?.program_id ?? null);
 
       // favoritos/ocultas
-      const [{ data: favData }, { data: hidData }] = await Promise.all([
+      const [{ data: favData }, { data: hidData }, { data: appsData }] = await Promise.all([
         supabase.from("vacancy_favorites").select("vacancy_id").eq("student_id", user.id).limit(500),
         supabase.from("vacancy_hidden").select("vacancy_id").eq("student_id", user.id).limit(500),
+        supabase
+          .from("applications")
+          .select("vacancy_id")
+          .eq("student_id", user.id)
+          // con que exista cualquier estado, ya cuenta como postulada
+          .limit(1000),
       ]);
 
       if (!ignore && favData) setFavIds(favData.map((x) => x.vacancy_id));
       if (!ignore && hidData) setHiddenIds(hidData.map((x) => x.vacancy_id));
+      if (!ignore && appsData) setAppliedVacancyIds(appsData.map(a => a.vacancy_id));
     };
     boot();
     return () => { ignore = true; };
@@ -200,12 +207,9 @@ export default function EstudiantesPage() {
           company:companies!left ( id, name, industry, logo_url ),
           vacancy_programs!inner ( program_id )
         `)
-        // estado correcto en tu esquema
-        .eq("status", "active")
-        // disponibilidad real
-        .gt("spots_left", 0)
-        // filtro por el programa del alumno (tabla puente)
-        .eq("vacancy_programs.program_id", studentProgramId);
+        .eq("status", "active")     // usa tu valor correcto del esquema
+        .gt("spots_left", 0)        // disponibilidad real
+        .eq("vacancy_programs.program_id", studentProgramId); // por programa
 
       // 3) texto libre (título/ubicación/empresa)
       if (q) {
@@ -331,6 +335,44 @@ export default function EstudiantesPage() {
     }
   };
 
+  /* ----- Acción: Postularse (desktop) ----- */
+  const applyNow = async (vacancy) => {
+    try {
+      if (!userId) { router.push("/login"); return; }
+      if (!vacancy?.id) return;
+
+      // evita doble click si ya está postulada
+      if (appliedVacancyIds.includes(vacancy.id)) return;
+
+      const { data, error } = await supabase
+        .from("applications")
+        .insert({
+          vacancy_id: vacancy.id,
+          student_id: userId,
+          status: "postulada",             // 👈 estado correcto de tu enum
+          applied_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+
+      if (error) {
+        // Si hay unique constraint en (student_id, vacancy_id)
+        if ((error.code === "23505") || /duplicate key|already exists/i.test(error.message || "")) {
+          alert("Ya te habías postulado a esta vacante.");
+          setAppliedVacancyIds((prev) => prev.includes(vacancy.id) ? prev : [...prev, vacancy.id]);
+          return;
+        }
+        throw error;
+      }
+
+      setAppliedVacancyIds((prev) => [...prev, vacancy.id]);
+      alert("¡Listo! Tu postulación fue enviada.");
+    } catch (e) {
+      console.error(e);
+      alert(e.message || "No se pudo completar la postulación.");
+    }
+  };
+
   const filtered = useMemo(() => vacancies, [vacancies]);
 
   return (
@@ -415,8 +457,10 @@ export default function EstudiantesPage() {
                     className={`jobs-card ${selected?.id === v.id ? "is-active" : ""}`}
                     onClick={() => {
                       if (typeof window !== "undefined" && window.matchMedia("(max-width: 900px)").matches) {
+                        // En móvil, ve al detalle
                         router.push(`/alumno/vacante/${v.id}`);
                       } else {
+                        // En desktop, abre en el panel derecho
                         setSelected(v);
                       }
                     }}
@@ -575,11 +619,13 @@ export default function EstudiantesPage() {
                 )}
 
                 <div className="jobs-cta">
+                  {/* En desktop, postula directo */}
                   <button
                     className="jobs-apply"
-                    onClick={() => router.push(`/alumno/vacante/${selected.id}`)}
+                    disabled={appliedVacancyIds.includes(selected.id)}
+                    onClick={() => applyNow(selected)}
                   >
-                    Ver detalle / Postularse
+                    {appliedVacancyIds.includes(selected.id) ? "Ya postulada" : "Postularse ahora"}
                   </button>
                 </div>
 

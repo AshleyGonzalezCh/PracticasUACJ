@@ -31,6 +31,7 @@ export default function MisPracticasPage() {
 
   // Listas
   const [favorites, setFavorites] = useState([]);
+  const [applied, setApplied] = useState([]);      // <<< NUEVO: postulaciones activas / historial
   const [completed, setCompleted] = useState([]);
   const [hidden, setHidden] = useState([]);
   const [showHidden, setShowHidden] = useState(false);
@@ -114,7 +115,7 @@ export default function MisPracticasPage() {
         .filter((v) => !!v?.id);
       setFavorites(favVacancies);
 
-      // 4) TODAS las aplicaciones del alumno, y filtramos en cliente para "completadas"
+      // 4) TODAS las aplicaciones del alumno
       const { data: apps, error: aErr } = await supabase
         .from("applications")
         .select(`
@@ -134,11 +135,18 @@ export default function MisPracticasPage() {
         return;
       }
 
-      const completedList = (apps || [])
+      // Separa postulaciones activas (no "completadas") y completadas
+      const appsClean = (apps || []).filter((r) => r?.vacancy?.id);
+      const completedList = appsClean
         .filter((r) => COMPLETED_STATES.includes(String(r.status || "").toLowerCase()))
-        .map((r) => r.vacancy)
-        .filter(Boolean);
+        .map((r) => ({ ...r.vacancy, _app_status: r.status, _applied_at: r.applied_at }));
+
+      const appliedList = appsClean
+        .filter((r) => !COMPLETED_STATES.includes(String(r.status || "").toLowerCase()))
+        .map((r) => ({ ...r.vacancy, _app_status: r.status, _applied_at: r.applied_at }));
+
       setCompleted(completedList);
+      setApplied(appliedList);
 
       // 5) Vacantes silenciadas (vacancy_hidden)
       const { data: hidd, error: hErr } = await supabase
@@ -349,7 +357,7 @@ export default function MisPracticasPage() {
   const fmtMod = (m) =>
     m === "presencial" ? "Presencial" : m === "remoto" ? "Remota" : "Híbrida";
 
-  const Card = ({ v, actions = null }) => (
+  const Card = ({ v, actions = null, subtitle = null }) => (
     <article className="jobs-card" style={{ cursor: "default" }}>
       <div className="jobs-card-left" />
       <div className="jobs-card-body">
@@ -366,6 +374,7 @@ export default function MisPracticasPage() {
             <div>
               <h4 className="jobs-card-title">{v?.title}</h4>
               <div className="jobs-card-company">{v?.company?.name || "Empresa"}</div>
+              {subtitle && <div className="jobs-muted small" style={{ marginTop: 2 }}>{subtitle}</div>}
               <div className="jobs-card-rating">
                 <Stars rating={v?.rating_avg} compact />
                 <span className="jobs-muted small">({v?.rating_count ?? 0})</span>
@@ -373,7 +382,7 @@ export default function MisPracticasPage() {
             </div>
           </div>
 
-          {/* Acciones al estilo "buscar" */}
+          {/* Acciones / chips a la derecha */}
           <div className="jobs-card-actions" style={{ display: "flex", gap: 8, alignItems: "center" }}>
             {actions}
           </div>
@@ -403,6 +412,36 @@ export default function MisPracticasPage() {
       </div>
     </article>
   );
+
+  const chip = (text, tone = "default") => (
+    <span
+      className="jobs-chip"
+      style={{
+        background: tone === "success" ? "#e9f7ef"
+                 : tone === "warn" ? "#fff7e6"
+                 : tone === "danger" ? "#fee2e2"
+                 : "#f4f6fa",
+        borderColor: tone === "success" ? "#c6f0d5"
+                 : tone === "warn" ? "#ffe6b3"
+                 : tone === "danger" ? "#fecaca"
+                 : "#e6eaf1"
+      }}
+    >
+      {text}
+    </span>
+  );
+
+  const statusTone = (s) => {
+    const k = String(s || "").toLowerCase();
+    if (k === "aceptada") return "success";
+    if (k === "oferta") return "warn";
+    if (k === "rechazada" || k === "retirada") return "danger";
+    return "default";
+  };
+
+  const fmtDate = (iso) => {
+    try { return new Date(iso).toLocaleDateString(); } catch { return ""; }
+  };
 
   return (
     <>
@@ -554,6 +593,22 @@ export default function MisPracticasPage() {
 
           {/* ---------- Columna derecha: Listas ---------- */}
           <section style={{ display: "grid", gap: 20 }}>
+            {/* Mis postulaciones */}
+            <h2 style={{ textAlign: "center" }}>Mis postulaciones</h2>
+            {loading && <div className="jobs-card sk" />}
+            {!loading && applied.length === 0 && (
+              <div className="jobs-empty small">Aún no te has postulado a ninguna vacante.</div>
+            )}
+            {!loading &&
+              applied.map((v) => (
+                <Card
+                  key={v.id + (v._applied_at || "")}
+                  v={v}
+                  subtitle={v._applied_at ? `Postulación del ${fmtDate(v._applied_at)}` : null}
+                  actions={chip(`Estado: ${v._app_status || "-"}`, statusTone(v._app_status))}
+                />
+              ))}
+
             {/* Favoritos */}
             <h2 style={{ textAlign: "center" }}>Proyectos guardados</h2>
             {loading && <div className="jobs-card sk" />}
@@ -589,7 +644,11 @@ export default function MisPracticasPage() {
               <>
                 <h2 style={{ textAlign: "center" }}>Prácticas completadas</h2>
                 {completed.map((v) => (
-                  <Card key={v.id} v={v} />
+                  <Card
+                    key={v.id}
+                    v={v}
+                    actions={chip(`Estado: ${v._app_status || "-"}`, "success")}
+                  />
                 ))}
               </>
             )}
