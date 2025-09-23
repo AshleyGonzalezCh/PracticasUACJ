@@ -1,13 +1,13 @@
 // pages/login.js
 import { useState } from 'react';
 import { useRouter } from 'next/router';
+import Link from 'next/link';
 import Navbar from '../components/navbar';
 import Footer from '../components/footer';
 import { supabase } from '../lib/supabaseClient';
 
-const allowed = ['uacj.mx', 'alumnos.uacj.mx'];
-const isInstitutional = (email) =>
-  allowed.some((d) => email.trim().toLowerCase().endsWith('@' + d));
+const isProfesor = (email) => email.trim().toLowerCase().endsWith('@uacj.mx');
+const isAlumno = (email) => email.trim().toLowerCase().endsWith('@alumnos.uacj.mx');
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -20,11 +20,6 @@ export default function LoginPage() {
     e.preventDefault();
     setErr('');
 
-    if (!isInstitutional(email)) {
-      setErr('Usa tu correo institucional (@uacj.mx o @alumnos.uacj.mx).');
-      return;
-    }
-
     setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
@@ -33,19 +28,15 @@ export default function LoginPage() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { setErr('No se pudo obtener el usuario.'); return; }
 
-    const { data: profile } = await supabase
-      .from('profiles').select('role').eq('id', user.id).single();
+    if (isProfesor(email)) return router.replace('/profesores');
+    if (isAlumno(email)) return router.replace('/alumno/buscar');
 
-    const role = (profile && profile.role) ? profile.role : 'student';
-
-    // 👇 Redirección actualizada
-    const studentPath = '/alumno/buscar';
-    router.replace(role === 'professor' ? '/profesores' : studentPath);
+    // Default: empresa
+    router.replace('/empresa/vacantes');
   };
 
   const onReset = async () => {
-    if (!email) { setErr('Escribe tu correo para enviarte el enlace de recuperación.'); return; }
-    if (!isInstitutional(email)) { setErr('El correo debe ser institucional.'); return; }
+    if (!email) return setErr('Escribe tu correo para enviarte el enlace de recuperación.');
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/login`,
     });
@@ -58,10 +49,7 @@ export default function LoginPage() {
       <Navbar />
       <main className="login-wrap">
         <div className="login-card">
-          {/* Panel izquierdo (azul) */}
           <div className="login-left" />
-
-          {/* Panel derecho (formulario) */}
           <div className="login-right">
             <h2>INICIAR SESIÓN</h2>
 
@@ -69,7 +57,7 @@ export default function LoginPage() {
               <input
                 className="login-input"
                 type="email"
-                placeholder="Correo electrónico institucional"
+                placeholder="Correo electrónico"
                 value={email}
                 onChange={e=>setEmail(e.target.value)}
                 required
@@ -93,6 +81,13 @@ export default function LoginPage() {
             <button className="login-forgot" type="button" onClick={onReset}>
               ¿Olvidaste tu contraseña?
             </button>
+
+            <p className="login-company">
+                ¿Eres empresa?{' '}
+              <a onClick={() => router.push('/empresa/signup')} style={{ color: '#2563eb', cursor: 'pointer' }}>
+                Regístrate aquí
+              </a>
+            </p>
           </div>
         </div>
       </main>

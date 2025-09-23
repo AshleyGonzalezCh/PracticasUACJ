@@ -57,9 +57,9 @@ function IconBtn({ title, onClick, children }) {
         width: 36,
         height: 36,
         borderRadius: 999,
-        border: "1px solid #d6d8df",      // <- SIEMPRE igual
-        background: "#fff",                // <- SIEMPRE igual
-        color: "#1F3354",                  // <- SIEMPRE igual
+        border: "1px solid #d6d8df",
+        background: "#fff",
+        color: "#1F3354",
         cursor: "pointer",
         boxShadow: "0 1px 4px rgba(0,0,0,.06)"
       }}
@@ -69,20 +69,14 @@ function IconBtn({ title, onClick, children }) {
   );
 }
 
-
 function IconBookmark({ active = false }) {
   if (active) {
-    // Relleno azul cuando está activo
     return (
       <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden>
-        <path
-          fill="#2563eb"
-          d="M6 2h12a1 1 0 0 1 1 1v18l-7-4-7 4V3a1 1 0 0 1 1-1Z"
-        />
+        <path fill="#2563eb" d="M6 2h12a1 1 0 0 1 1 1v18l-7-4-7 4V3a1 1 0 0 1 1-1Z" />
       </svg>
     );
   }
-  // Outline con color principal cuando está inactivo
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden>
       <path
@@ -95,9 +89,7 @@ function IconBookmark({ active = false }) {
   );
 }
 
-
 function IconBan() {
-  // ojo tachado/prohibido
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden>
       <path
@@ -134,7 +126,7 @@ export default function EstudiantesPage() {
 
   // Usuario/favoritos/ocultas
   const [userId, setUserId] = useState(null);
-  const [favIds, setFavIds] = useState([]); // uuid[]
+  const [favIds, setFavIds] = useState([]);    // uuid[]
   const [hiddenIds, setHiddenIds] = useState([]); // uuid[]
 
   /* ----- Boot: usuario + favoritos + ocultas ----- */
@@ -154,9 +146,7 @@ export default function EstudiantesPage() {
       if (!ignore && hidData) setHiddenIds(hidData.map((x) => x.vacancy_id));
     };
     boot();
-    return () => {
-      ignore = true;
-    };
+    return () => { ignore = true; };
   }, []);
 
   /* ----- Carga de vacantes (excluye ocultas) ----- */
@@ -179,22 +169,28 @@ export default function EstudiantesPage() {
         if (compHits?.length) companyIds = compHits.map((c) => c.id);
       }
 
-      // 2) query base
+      // 2) query base (SIN expires_at y SIN MAX_SAFE_INTEGER)
       let query = supabase
         .from("vacancies")
         .select(`
           id, title, modality, compensation, language, requirements, activities,
           location_text, rating_avg, rating_count, status, created_at, company_id,
+          spots_total, spots_taken, spots_left,
           company:companies!left ( id, name, industry, logo_url )
         `)
-        .eq("status", "active");
+        .eq("status", "active")
+        // cupo disponible real
+        .gt("spots_left", 0);
 
       // 3) texto libre
       if (q) {
         const safe = String(q).replace(/[\*\(\)",]/g, " ").trim();
         const likeStar = `*${safe}*`;
         const parts = [`title.ilike.${likeStar}`, `location_text.ilike.${likeStar}`];
-        if (companyIds.length) parts.push(`company_id.in.(${companyIds.join(",")})`);
+        if (companyIds.length) {
+          const csv = `(${companyIds.map(id => `"${id}"`).join(",")})`;
+          parts.push(`company_id.in.${csv}`);
+        }
         query = query.or(parts.join(","));
       }
 
@@ -213,13 +209,16 @@ export default function EstudiantesPage() {
 
       if (filters.idioma) query = query.eq("language", filters.idioma);
 
-      // 6) excluir ocultas
+      // 6) excluir ocultas (UUIDs entre comillas)
       if (hiddenIds.length) {
-        query = query.not("id", "in", `(${hiddenIds.join(",")})`);
+        const csvHidden = `(${hiddenIds.map(id => `"${id}"`).join(",")})`;
+        query = query.not("id", "in", csvHidden);
       }
 
       // 7) orden + paginación
-      query = query.order("created_at", { ascending: false }).range(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE - 1);
+      const from = page * PAGE_SIZE;
+      const to = from + PAGE_SIZE - 1;
+      query = query.order("created_at", { ascending: false }).range(from, to);
 
       const { data, error } = await query;
       if (myId !== reqSeq.current) return;
@@ -242,86 +241,70 @@ export default function EstudiantesPage() {
   }, [q, loc, filters, page, hiddenIds]);
 
   /* ----- Actions: favoritos / ocultas ----- */
-const toggleFavorite = async (vacancyId) => {
-  if (!userId) return;
-
-  // No permitir fav si está oculta (puedes cambiarlo por "desocultar y luego fav")
-  if (hiddenIds.includes(vacancyId)) {
-    // return alert("Esta vacante está silenciada. Muéstrala primero para agregar a favoritos.");
-  }
-
-  try {
-    if (favIds.includes(vacancyId)) {
-      const { error } = await supabase
-        .from("vacancy_favorites")
-        .delete()
-        .eq("student_id", userId)
-        .eq("vacancy_id", vacancyId);
-      if (error) throw error;
-      setFavIds((prev) => prev.filter((id) => id !== vacancyId));
-    } else {
-      const { error } = await supabase
-        .from("vacancy_favorites")
-        .insert({ student_id: userId, vacancy_id: vacancyId });
-      if (error) throw error;
-      setFavIds((prev) => [...prev, vacancyId]);
-    }
-  } catch (e) {
-    console.error(e);
-    alert(e.message || "No se pudo actualizar favoritos.");
-  }
-};
-
-
-  const toggleHidden = async (vacancyId) => {
-  if (!userId) return;
-  try {
-    if (hiddenIds.includes(vacancyId)) {
-      // === Mostrar (quitar de silenciadas) ===
-      const { error } = await supabase
-        .from("vacancy_hidden")
-        .delete()
-        .eq("student_id", userId)
-        .eq("vacancy_id", vacancyId);
-      if (error) throw error;
-
-      setHiddenIds((prev) => prev.filter((id) => id !== vacancyId));
-    } else {
-      // === Ocultar (agregar a silenciadas) ===
-      const { error: hideErr } = await supabase
-        .from("vacancy_hidden")
-        .insert({ student_id: userId, vacancy_id: vacancyId });
-      if (hideErr) throw hideErr;
-
-      // Si estaba en favoritos, bórralo de favorites
+  const toggleFavorite = async (vacancyId) => {
+    if (!userId) return;
+    try {
       if (favIds.includes(vacancyId)) {
-        const { error: favDelErr } = await supabase
+        const { error } = await supabase
           .from("vacancy_favorites")
           .delete()
           .eq("student_id", userId)
           .eq("vacancy_id", vacancyId);
-        if (favDelErr) throw favDelErr;
-
-        // Actualiza estado local de favoritos
+        if (error) throw error;
         setFavIds((prev) => prev.filter((id) => id !== vacancyId));
+      } else {
+        const { error } = await supabase
+          .from("vacancy_favorites")
+          .insert({ student_id: userId, vacancy_id: vacancyId });
+        if (error) throw error;
+        setFavIds((prev) => [...prev, vacancyId]);
       }
-
-      // Agrega al estado local de ocultas
-      setHiddenIds((prev) => [...prev, vacancyId]);
-
-      // Si justo ocultaste la vacante seleccionada, elige otra
-      if (selected?.id === vacancyId) {
-        const next = vacancies.find(
-          (v) => v.id !== vacancyId && !hiddenIds.includes(v.id)
-        );
-        setSelected(next || null);
-      }
+    } catch (e) {
+      console.error(e);
+      alert(e.message || "No se pudo actualizar favoritos.");
     }
-  } catch (e) {
-    console.error(e);
-    alert(e.message || "No se pudo actualizar la visibilidad.");
-  }
-};
+  };
+
+  const toggleHidden = async (vacancyId) => {
+    if (!userId) return;
+    try {
+      if (hiddenIds.includes(vacancyId)) {
+        const { error } = await supabase
+          .from("vacancy_hidden")
+          .delete()
+          .eq("student_id", userId)
+          .eq("vacancy_id", vacancyId);
+        if (error) throw error;
+        setHiddenIds((prev) => prev.filter((id) => id !== vacancyId));
+      } else {
+        const { error: hideErr } = await supabase
+          .from("vacancy_hidden")
+          .insert({ student_id: userId, vacancy_id: vacancyId });
+        if (hideErr) throw hideErr;
+
+        if (favIds.includes(vacancyId)) {
+          const { error: favDelErr } = await supabase
+            .from("vacancy_favorites")
+            .delete()
+            .eq("student_id", userId)
+            .eq("vacancy_id", vacancyId);
+          if (favDelErr) throw favDelErr;
+          setFavIds((prev) => prev.filter((id) => id !== vacancyId));
+        }
+        setHiddenIds((prev) => [...prev, vacancyId]);
+
+        if (selected?.id === vacancyId) {
+          const next = vacancies.find(
+            (v) => v.id !== vacancyId && !hiddenIds.includes(v.id)
+          );
+          setSelected(next || null);
+        }
+      }
+    } catch (e) {
+      console.error(e);
+      alert(e.message || "No se pudo actualizar la visibilidad.");
+    }
+  };
 
   /* ----- Helpers ----- */
   const filtered = useMemo(() => vacancies, [vacancies]);
@@ -340,10 +323,7 @@ const toggleFavorite = async (vacancyId) => {
             </svg>
             <input
               value={q}
-              onChange={(e) => {
-                setPage(0);
-                setQ(e.target.value);
-              }}
+              onChange={(e) => { setPage(0); setQ(e.target.value); }}
               placeholder="Título del empleo, palabras clave o empresa"
             />
           </div>
@@ -357,10 +337,7 @@ const toggleFavorite = async (vacancyId) => {
             </svg>
             <input
               value={loc}
-              onChange={(e) => {
-                setPage(0);
-                setLoc(e.target.value);
-              }}
+              onChange={(e) => { setPage(0); setLoc(e.target.value); }}
               placeholder="Ciudad/colonia (p. ej., Ciudad Juárez)"
             />
           </div>
@@ -375,28 +352,19 @@ const toggleFavorite = async (vacancyId) => {
           <Pill
             label="Modalidad"
             value={filters.modalidad}
-            onChange={(v) => {
-              setPage(0);
-              setFilters((s) => ({ ...s, modalidad: v }));
-            }}
+            onChange={(v) => { setPage(0); setFilters((s) => ({ ...s, modalidad: v })); }}
             options={MODALIDADES}
           />
           <Pill
             label="Compensación"
             value={filters.comp}
-            onChange={(v) => {
-              setPage(0);
-              setFilters((s) => ({ ...s, comp: v }));
-            }}
+            onChange={(v) => { setPage(0); setFilters((s) => ({ ...s, comp: v })); }}
             options={COMPENSACIONES}
           />
           <Pill
             label="Idioma"
             value={filters.idioma}
-            onChange={(v) => {
-              setPage(0);
-              setFilters((s) => ({ ...s, idioma: v }));
-            }}
+            onChange={(v) => { setPage(0); setFilters((s) => ({ ...s, idioma: v })); }}
             options={IDIOMAS}
           />
         </div>
@@ -422,10 +390,7 @@ const toggleFavorite = async (vacancyId) => {
                     key={v.id}
                     className={`jobs-card ${selected?.id === v.id ? "is-active" : ""}`}
                     onClick={() => {
-                      if (
-                        typeof window !== "undefined" &&
-                        window.matchMedia("(max-width: 900px)").matches
-                      ) {
+                      if (typeof window !== "undefined" && window.matchMedia("(max-width: 900px)").matches) {
                         router.push(`/alumno/vacante/${v.id}`);
                       } else {
                         setSelected(v);
@@ -515,7 +480,7 @@ const toggleFavorite = async (vacancyId) => {
                     </div>
                   </div>
 
-                  {/* Acciones en detalle (mismo estilo) */}
+                  {/* Acciones en detalle */}
                   {(() => {
                     const isFav = favIds.includes(selected.id);
                     const isHidden = hiddenIds.includes(selected.id);
@@ -526,8 +491,7 @@ const toggleFavorite = async (vacancyId) => {
                           active={isFav}
                           onClick={() => toggleFavorite(selected.id)}
                         >
-                          <IconBookmark active={favIds.includes(selected.id)} />
-
+                          <IconBookmark active={isFav} />
                         </IconBtn>
 
                         <IconBtn

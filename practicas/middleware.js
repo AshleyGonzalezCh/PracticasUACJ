@@ -20,25 +20,31 @@ export async function middleware(req) {
   const { data: { user } } = await supabase.auth.getUser();
   const pathname = req.nextUrl.pathname;
 
-  // ---- Redirección legacy: /estudiantes -> /alumno/buscar
+  const roleHome = (role) =>
+    role === 'professor' ? '/profesores'
+    : role === 'company' ? '/empresa/vacantes'
+    : '/alumno/buscar';
+
+  // Redirección legacy: /estudiantes -> /alumno/buscar
   if (pathname === '/estudiantes') {
     const url = req.nextUrl.clone();
     url.pathname = '/alumno/buscar';
     return NextResponse.redirect(url);
   }
 
-  // ---- Rutas públicas (dejan pasar sin login)
+  // Rutas públicas (permiten acceso sin login)
   const isPublic =
     pathname === '/' ||
     pathname.startsWith('/login') ||
-    pathname.startsWith('/img') ||            // Para poder utilizar las img sin logearse
+    pathname.startsWith('/empresa/signup') || // <- signup de empresa es público
+    pathname.startsWith('/img') ||
     pathname.startsWith('/_next') ||
     pathname.startsWith('/api') ||
     pathname === '/favicon.ico';
 
   if (isPublic) {
-    // Si se pica al login estando ya logeado te manda al portal, ojito plebe
-    if (pathname.startsWith('/login') && user) {
+    // Si ya está logeado y entra a /login o /empresa/signup, redirige a su home por rol
+    if (user && (pathname.startsWith('/login') || pathname.startsWith('/empresa/signup'))) {
       const { data: profile } = await supabase
         .from('profiles')
         .select('role')
@@ -47,7 +53,7 @@ export async function middleware(req) {
 
       const role = profile?.role ?? 'student';
       const url = req.nextUrl.clone();
-      url.pathname = role === 'professor' ? '/profesores' : '/alumno/buscar'; // <<< aquí cambiamos
+      url.pathname = roleHome(role);
       return NextResponse.redirect(url);
     }
     return res;
