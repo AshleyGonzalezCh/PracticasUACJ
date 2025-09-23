@@ -28,6 +28,14 @@
   gap: 30px; /* espacio entre logo y texto */
   }
 
+.nav-title {
+  width: 80%;
+  font-size: 1.5rem;
+  font-weight: bold;
+  padding: 0.3rem 0.6rem;
+
+  }
+
 .nav-text {
   font-size: 1.2rem;
   font-weight: light;
@@ -667,7 +675,7 @@
 }
 
 .logo-uacj {
-  height: 50px;
+  height: 40px;
 }
 
 .footer-university {
@@ -698,6 +706,7 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 2rem;
+  padding: 0 2rem;
 }
 
 .footer-links h4 {
@@ -727,7 +736,7 @@
 
 .footer-bottom {
   background-color: #0e1f3a; /* aún más oscuro */
-  text-align: center;
+  text-align: right;
   padding: 1rem;
   font-size: 0.85rem;
 }
