@@ -44,7 +44,7 @@ const MAP_DB_TO_UI = {
 const fmtMod = (dbVal) => MAP_DB_TO_UI.modalidad[dbVal] ?? dbVal ?? "Modalidad N/A";
 const fmtComp = (dbVal) => MAP_DB_TO_UI.comp[dbVal] ?? dbVal ?? "Compensación N/A";
 
-/* ---------- IconButtons (mismo look que Mis prácticas) ---------- */
+/* ---------- IconButtons ---------- */
 function IconBtn({ title, onClick, children }) {
   return (
     <button
@@ -124,12 +124,13 @@ export default function EstudiantesPage() {
   const PAGE_SIZE = 20;
   const [hasMore, setHasMore] = useState(true);
 
-  // Usuario/favoritos/ocultas
+  // Usuario, programa, favoritos/ocultas
   const [userId, setUserId] = useState(null);
-  const [favIds, setFavIds] = useState([]);    // uuid[]
-  const [hiddenIds, setHiddenIds] = useState([]); // uuid[]
+  const [studentProgramId, setStudentProgramId] = useState(null);
+  const [favIds, setFavIds] = useState([]);
+  const [hiddenIds, setHiddenIds] = useState([]);
 
-  /* ----- Boot: usuario + favoritos + ocultas ----- */
+  /* ----- Boot: usuario + programa + favoritos + ocultas ----- */
   useEffect(() => {
     let ignore = false;
     const boot = async () => {
@@ -137,6 +138,16 @@ export default function EstudiantesPage() {
       if (!user || ignore) return;
       setUserId(user.id);
 
+      // Programa del alumno
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("program_id")
+        .eq("id", user.id)
+        .single();
+
+      if (!ignore) setStudentProgramId(profile?.program_id ?? null);
+
+      // favoritos/ocultas
       const [{ data: favData }, { data: hidData }] = await Promise.all([
         supabase.from("vacancy_favorites").select("vacancy_id").eq("student_id", user.id).limit(500),
         supabase.from("vacancy_hidden").select("vacancy_id").eq("student_id", user.id).limit(500),
@@ -149,12 +160,22 @@ export default function EstudiantesPage() {
     return () => { ignore = true; };
   }, []);
 
-  /* ----- Carga de vacantes (excluye ocultas) ----- */
+  /* ----- Carga de vacantes del PROGRAMA (excluye ocultas) ----- */
   useEffect(() => {
     const fetchData = async () => {
       const myId = ++reqSeq.current;
       setLoading(true);
       setErrorMsg("");
+
+      // Si no hay programa, no buscamos (y avisamos)
+      if (!studentProgramId) {
+        setVacancies([]);
+        setSelected(null);
+        setHasMore(false);
+        setLoading(false);
+        setErrorMsg("Tu perfil no tiene un programa asignado. Actualiza tu programa para ver vacantes.");
+        return;
+      }
 
       // 1) pre-búsqueda de empresas por nombre (si hay q)
       let companyIds = [];
@@ -169,20 +190,24 @@ export default function EstudiantesPage() {
         if (compHits?.length) companyIds = compHits.map((c) => c.id);
       }
 
-      // 2) query base (SIN expires_at y SIN MAX_SAFE_INTEGER)
+      // 2) query base: SOLO vacantes del programa del alumno
       let query = supabase
         .from("vacancies")
         .select(`
           id, title, modality, compensation, language, requirements, activities,
           location_text, rating_avg, rating_count, status, created_at, company_id,
           spots_total, spots_taken, spots_left,
-          company:companies!left ( id, name, industry, logo_url )
+          company:companies!left ( id, name, industry, logo_url ),
+          vacancy_programs!inner ( program_id )
         `)
+        // estado correcto en tu esquema
         .eq("status", "active")
-        // cupo disponible real
-        .gt("spots_left", 0);
+        // disponibilidad real
+        .gt("spots_left", 0)
+        // filtro por el programa del alumno (tabla puente)
+        .eq("vacancy_programs.program_id", studentProgramId);
 
-      // 3) texto libre
+      // 3) texto libre (título/ubicación/empresa)
       if (q) {
         const safe = String(q).replace(/[\*\(\)",]/g, " ").trim();
         const likeStar = `*${safe}*`;
@@ -238,7 +263,7 @@ export default function EstudiantesPage() {
     };
 
     fetchData();
-  }, [q, loc, filters, page, hiddenIds]);
+  }, [q, loc, filters, page, hiddenIds, studentProgramId]);
 
   /* ----- Actions: favoritos / ocultas ----- */
   const toggleFavorite = async (vacancyId) => {
@@ -306,7 +331,6 @@ export default function EstudiantesPage() {
     }
   };
 
-  /* ----- Helpers ----- */
   const filtered = useMemo(() => vacancies, [vacancies]);
 
   return (
@@ -449,7 +473,7 @@ export default function EstudiantesPage() {
                 );
               })}
 
-            {!loading && hasMore && (
+            {!loading && hasMore && filtered.length > 0 && (
               <button className="jobs-more" onClick={() => setPage((p) => p + 1)}>
                 Cargar más
               </button>
@@ -464,7 +488,13 @@ export default function EstudiantesPage() {
           <article className="jobs-detail">
             {loading && <div className="jobs-skeleton">Cargando…</div>}
 
-            {!loading && !selected && <div className="jobs-empty">No se encontró la vacante</div>}
+            {!loading && !selected && (
+              <div className="jobs-empty">
+                {studentProgramId
+                  ? "No se encontró la vacante"
+                  : "Configura tu programa en el perfil para ver vacantes dirigidas a tu carrera."}
+              </div>
+            )}
 
             {!loading && selected && (
               <div className="jobs-detail-inner">
@@ -488,7 +518,6 @@ export default function EstudiantesPage() {
                       <div className="jobs-card-actions" style={{ display: "flex", gap: 8, alignItems: "center" }}>
                         <IconBtn
                           title={isFav ? "Quitar de favoritos" : "Agregar a favoritos"}
-                          active={isFav}
                           onClick={() => toggleFavorite(selected.id)}
                         >
                           <IconBookmark active={isFav} />
@@ -496,7 +525,6 @@ export default function EstudiantesPage() {
 
                         <IconBtn
                           title={isHidden ? "Mostrar esta vacante" : "Ocultar esta vacante"}
-                          active={isHidden}
                           onClick={() => toggleHidden(selected.id)}
                         >
                           <IconBan />
@@ -547,7 +575,12 @@ export default function EstudiantesPage() {
                 )}
 
                 <div className="jobs-cta">
-                  <button className="jobs-apply">Postularse ahora</button>
+                  <button
+                    className="jobs-apply"
+                    onClick={() => router.push(`/alumno/vacante/${selected.id}`)}
+                  >
+                    Ver detalle / Postularse
+                  </button>
                 </div>
 
                 <div className="jobs-map">
