@@ -5,10 +5,7 @@ export default function Footer() {
         {/* Columna izquierda */}
         <div className="footer-left">
           <div className="footer-brand">
-            <img src="/img/uacj-logo.png" alt="UACJ" className="logo-uacj" />
-            <span className="footer-university">
-              Universidad Autónoma <br /> de Ciudad Juárez
-            </span>
+            <img src="/img/UACJ-firma.png" alt="UACJ" className="logo-uacj" />
           </div>
 
           <div className="footer-socials">
@@ -18,7 +15,7 @@ export default function Footer() {
           </div>
 
           <img
-            src="/img/vinculacion-logo.png"
+            src="/img/logo-vinculacion.png"
             alt="Subdirección de Vinculación"
             className="logo-vinculacion"
           />

@@ -90,11 +90,16 @@ export default function Navbar() {
             <Image src="/img/uacj.png" alt="Logo UACJ" width={60} height={60} priority />
           </Link>
         </div>
+
+        <div className="nav-title">
+          <h3  href="#">VINCULACIÓN</h3>
+        </div>
+
         <div className={`menu-toggle ${menuActive ? "active" : ""}`} onClick={toggleMenu}>
           <span></span><span></span><span></span>
         </div>
         <div className={`nav-links ${menuActive ? "active" : ""}`}>
-          <a className="nav-text" href="#">Vinculación</a>
+
           <Link className="nav-text" href="/login">Iniciar Sesión</Link>
         </div>
       </nav>
