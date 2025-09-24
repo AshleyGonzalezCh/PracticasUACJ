@@ -130,7 +130,10 @@ export default function Home() {
               propiciando en las y los estudiantes diversas actividades de aprendizaje y experiencia en el ámbito profesional
               dentro de su formación.
             </p>
-            <button className="btn-leer-mas">Leer más</button>
+            <Link href={"/practicas"}>
+              <button className="btn-leer-mas">Leer más</button>
+            </Link>
+            
           </div>
         </div>
 

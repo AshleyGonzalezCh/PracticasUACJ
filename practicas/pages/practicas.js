@@ -101,7 +101,10 @@ export default function PracticasInfoPage() {
                         <h2>Conecta con el mundo laboral</h2>
                         <p>No esperes más para transformar tu aprendizaje en experiencia real y asegurar tu camino al éxito. </p>
                     </div>
-                    <button className='portal-estudiante'>Ingresar al portal de estudiantes</button>
+                    <Link href={"/login"}>
+                        <button className='portal-estudiante'>Ingresar al portal de estudiantes</button>
+                    </Link>
+                    
                 </div>
             </div>
         </div>

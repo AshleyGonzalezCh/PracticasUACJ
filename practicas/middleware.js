@@ -36,6 +36,7 @@ export async function middleware(req) {
   const isPublic =
     pathname === '/' ||
     pathname.startsWith('/login') ||
+    pathname.startsWith('/practicas') ||
     pathname.startsWith('/empresa/signup') || // <- signup de empresa es público
     pathname.startsWith('/img') ||
     pathname.startsWith('/_next') ||
@@ -70,6 +71,9 @@ export async function middleware(req) {
 }
 
 export const config = {
-  // Excluye estáticos de Next
-  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+  matcher: [
+    // Pasa por middleware todo excepto _next, favicon y CUALQUIER archivo con extensión común de estáticos
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|jpeg|gif|svg|webp|ico|mp4|mp3|avi|mov|txt|xml|json|css|js|map)).*)',
+  ],
 };
+
