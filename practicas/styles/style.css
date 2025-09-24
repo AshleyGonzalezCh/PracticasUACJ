@@ -17,7 +17,7 @@ html, body {
 body {
   display: flex;
   flex-direction: column;
-  font-family: sans-serif;
+  font-family: Roboto;
   background-color: var(--color-fondo);
 }
 
