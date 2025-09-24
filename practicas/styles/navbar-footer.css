@@ -21,7 +21,7 @@
     align-items: center;
     padding: 1rem 2rem;
     flex-wrap: wrap;
-    font-family: sans-serif;
+    font-family: Roboto;
   }
 
   .navbar{
@@ -650,7 +650,7 @@
 .footer {
   background-color: #14294b; /* azul oscuro */
   color: #fff;
-  font-family: Arial, sans-serif;
+  font-family: Roboto;
 }
 
 .footer-top {
