@@ -1,8 +1,10 @@
     :root {
---color-principal: #1F3354;      /* azul principal */
---color-secundario: #F1A035;
---color-fondo: #E6E7E8;          /* fondo general */
---color-texto: #333333;          /* texto general */
+  --color-principal: #1F3354;     
+  --color-secundario: #F1A035;
+  --color-fondo: #E6E7E8;          
+  --color-texto: #333333;          
+  --color-azul-secundario: #2563eb;
+  --color-azul-oscuro: #1f2937;
 } 
  
  * {
@@ -22,35 +24,31 @@
     font-family: sans-serif;
   }
 
-  .nav-logo-text {
+  .navbar{
+      font-size: 1rem;
+      font-weight: light;
+      color: white;
+  }
+
+  .nav-logo {
   display: flex;
   align-items: center;
-  gap: 30px; /* espacio entre logo y texto */
+  gap: 30px;
+  cursor: pointer;
   }
 
 .nav-title {
   width: 80%;
-  font-size: 1.5rem;
-  font-weight: bold;
   padding: 0.3rem 0.6rem;
-
+  cursor: pointer;
   }
 
 .nav-text {
-  font-size: 1.2rem;
-  font-weight: light;
-  color: white;
   padding: 0.3rem 0.6rem;
   border-radius: 12px;
-  transition: all 0.3s ease;
   cursor: pointer;
 }
 
-.nav-text:hover {
-  background: var(--color-fondo);
-  color: var(--color-principal);
-  transition: .3s ease-in-out;
-}
 
 
   .nav-logo {

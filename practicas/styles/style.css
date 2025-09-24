@@ -5,6 +5,7 @@
   --color-texto: #333333;          /* texto general */
   --color-texto-blanco: #ffffff;
   --color-azul-secundario: #2563eb;
+  --color-azul-oscuro: #1f2937;
   --alto-navbar: 64px;
 }
 
@@ -609,8 +610,8 @@ body {
 .login-left{
   background: var(--color-principal);
   position: relative;
-  display: grid;
-  place-items: center;
+  /*display: grid;
+  place-items: center;*/
   padding: 40px 24px;
 }
 

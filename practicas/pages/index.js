@@ -73,7 +73,7 @@ export default function Home() {
 
             {/* Reglamento → externo en nueva pestaña */}
             <a
-              href="https://TU-URL-REAL-DEL-REGLAMENTO"
+              href="https://urlreglamentoquetodavianotengo"
               target="_blank"
               rel="noopener noreferrer"
               className="card"

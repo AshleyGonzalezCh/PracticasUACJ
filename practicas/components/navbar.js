@@ -85,14 +85,16 @@ export default function Navbar() {
   if (!isPortal) {
     return (
       <nav className="navbar">
-        <div className="nav-logo-text">
+        <div className="nav-logo">
           <Link href="/">
             <Image src="/img/uacj.png" alt="Logo UACJ" width={60} height={60} priority />
           </Link>
         </div>
 
         <div className="nav-title">
-          <h3  href="#">VINCULACIÓN</h3>
+          <Link href="/">
+            <h3>VINCULACIÓN</h3>
+          </Link>
         </div>
 
         <div className={`menu-toggle ${menuActive ? "active" : ""}`} onClick={toggleMenu}>
@@ -100,7 +102,7 @@ export default function Navbar() {
         </div>
         <div className={`nav-links ${menuActive ? "active" : ""}`}>
 
-          <Link className="nav-text" href="/login">Iniciar Sesión</Link>
+          <Link className="nav-text" href="/login">INICIAR SESIÓN</Link>
         </div>
       </nav>
     );
