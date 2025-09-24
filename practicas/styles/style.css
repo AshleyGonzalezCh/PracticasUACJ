@@ -119,11 +119,9 @@ body {
   border-color: #ffb413;
 }
 
-
-
-
-
 /*-------------------------------------------------*/
+
+
 /*--------------------Secciones---------------------*/
 
 .section-container {
@@ -247,7 +245,7 @@ body {
 }
 
 .logo-card {
-  width: 100%;
+  width: auto;
   height: 120px;
   border-radius: 12px;
   background-color: var(--color-texto-blanco);
@@ -1063,3 +1061,163 @@ body {
 @media (max-width: 600px){
   .kpi-cards{ grid-template-columns: 1fr 1fr; }
 }
+
+
+/*-------------------- Página: Prácticas ------------------*/
+
+.contenedorBanner{
+  width: 100%;
+  height: 700px;
+  min-height: 420px;                /* evita colapso en pantallas muy cortas */
+  position: relative;
+  overflow: hidden;
+  background: #0f1e34;              /* fondo base para que se vea el espacio sobrante */
+}
+
+.imagen-banner  {
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-repeat: no-repeat;
+  display: block;
+  transition: none;
+  object-fit: cover;
+}
+
+.texto-banner {
+  padding: 0rem 10rem 14rem 8rem;
+}
+h1 {
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+}
+
+
+.two-columns {
+  width: 800px;
+  overflow: hidden;
+  margin: 100px auto 0;
+  color: #000;
+  
+
+}
+
+.info-card-one {
+  width: 100%;
+  height: 400px;
+  display: grid;
+  grid-template-columns: 1fr 1.6fr;
+  margin: 2rem auto;
+  gap: 1rem;
+}
+
+.info-img{
+  width: 100%;
+  height: 400px;
+  display: grid;
+}
+.texto-info {
+  padding: 2rem;
+  background: var(--color-texto-blanco);
+  border-radius: 16px;
+  display: grid;
+}
+
+.texto-info h2 {
+  font-size: 1.5rem;
+  font-weight: 1000;
+}
+
+.texto-info ul{
+  list-style:disc;
+  padding-left: 20px;
+}
+
+.imagen-card-info{
+  width: 100%;
+  height: 100%;
+  background-size:cover;
+  background-repeat: no-repeat;
+  display: block;
+  border-radius: 16px;
+}
+
+.info-card-two {
+  width: 100%;
+  height: 400px;
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  margin: 2rem auto;
+  gap: 1rem;
+}
+
+.cards-practicas{
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  padding-bottom: 5rem;
+}
+.card-practicas{
+  width: 100%;
+  margin: 0 auto;
+}
+#tips {
+  width: 80%;
+}
+.card-info {
+  background-color: var(--color-principal);
+  position: relative;
+  background-size: cover;
+  background-position: center;
+  border-radius: 1rem;
+  height: 230px; /* altura base, se ajustará con media queries */
+  overflow: hidden;
+  padding: 20px;
+}
+.card-info h3{
+  font-size: 1.4rem;
+  font-weight: bolder;
+  margin-bottom: 10px;
+}
+
+.llamado{
+  width: 100%;
+  min-height: 250px;
+  background-color: #0e1f3a;
+   background-size: cover;
+   padding: 2rem 4rem;
+  background-position: center;
+  border-radius: 1rem;
+  align-items: center;
+  text-align: center;
+  display: block;
+  margin: 2rem 0;
+  font-size: 1.2rem;
+}
+
+.llamado h2 {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+.portal-estudiante {
+  background-color: var(--color-secundario);
+  color: var(--color-texto);
+  border: none;
+  padding: 0.7rem 1.5rem;
+  border-radius: 30px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-top: 20px;
+}
+
+.portal-estudiante:hover {
+   background-color: var(--color-principal);
+  transform: translateY(-3px);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
+  color: var(--color-texto-blanco);
+}
+
+/*--------------------------------------------------------*/
